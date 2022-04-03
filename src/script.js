@@ -2,6 +2,8 @@ import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'dat.gui'
+import terrainVertexShader from './shaders/terrain/vertex.glsl'
+import terrainFragmentShader from './shaders/terrain/fragment.glsl'
 
 /**
  * Base
@@ -65,12 +67,12 @@ controls.enableDamping = true
 const terrain = {}
 
 //Geometry
-terrain.geometry = new THREE.PlaneGeometry(1, 1, 100, 100)
+terrain.geometry = new THREE.PlaneGeometry(1, 1, 1000, 1000)
 terrain.geometry.rotateX(-Math.PI * 0.5)
 //Material
-terrain.material = new THREE.MeshBasicMaterial({
-   color: 0xffffff,
-   wireframe: true,
+terrain.material = new THREE.ShaderMaterial({
+   vertexShader: terrainVertexShader,
+   fragmentShader: terrainFragmentShader,
 })
 //Mesh
 terrain.mesh = new THREE.Mesh(terrain.geometry, terrain.material)
