@@ -80,6 +80,7 @@ float cnoise(vec3 P) {
 }
 
 varying float vElevation;
+uniform float uElevation;
 
 float getElevation(vec3 _position) {
     float elevation = 0.0;
@@ -90,7 +91,7 @@ float getElevation(vec3 _position) {
     //Smaller details
     elevation += cnoise(vec3((_position.xz + 144.0) * 1.0, 0.0)) * 0.2;
 
-    elevation *= 2.0;
+    elevation *= uElevation;
 
     return elevation;
 }

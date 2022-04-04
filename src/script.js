@@ -18,10 +18,6 @@ const scene = new THREE.Scene()
  * Debug
  */
 const gui = new dat.GUI()
-var clearColor = {
-   color1: '#221a1a',
-}
-gui.addColor(clearColor, 'color1')
 
 /**
  * Sizes
@@ -72,6 +68,8 @@ const terrain = {}
 
 //Texture
 terrain.texture = {}
+terrain.texture.linesCount = 5
+terrain.texture.bigLineWidth = 5
 terrain.texture.width = 32
 terrain.texture.height = 128
 terrain.texture.canvas = document.createElement('canvas')
@@ -83,15 +81,64 @@ terrain.texture.canvas.style.left = 0
 terrain.texture.canvas.style.zIndex = 1
 document.body.append(terrain.texture.canvas)
 terrain.texture.context = terrain.texture.canvas.getContext('2d')
-terrain.texture.context.fillStyle = 'red'
-terrain.texture.context.fillRect(
-   0,
-   0,
-   terrain.texture.width,
-   terrain.texture.height
-)
 
 terrain.texture.instance = new THREE.CanvasTexture(terrain.texture.canvas)
+terrain.texture.instance.wrapS = THREE.RepeatWrapping
+terrain.texture.instance.wrapT = THREE.RepeatWrapping
+terrain.texture.instance.magFilter = THREE.NearestFilter
+
+terrain.texture.update = () => {
+   terrain.texture.context.clearRect(
+      0,
+      0,
+      terrain.texture.width,
+      terrain.texture.height
+   )
+
+   //Big Line
+   terrain.texture.context.globalAlpha = 1
+   terrain.texture.context.fillStyle = '#4ECDC4'
+   terrain.texture.context.fillRect(
+      0,
+      0,
+      terrain.texture.width,
+      Math.round(terrain.texture.height * 0.04)
+   )
+
+   //Small Lines
+   const smallLinesCount = terrain.texture.linesCount - 1
+
+   for (let i = 0; i < smallLinesCount; i++) {
+      terrain.texture.context.globalAlpha = 0.5
+      terrain.texture.context.fillRect(
+         0,
+         Math.round(terrain.texture.height / terrain.texture.linesCount) *
+            (i + 1),
+         terrain.texture.width,
+         Math.round(terrain.texture.height * 0.01)
+      )
+   }
+
+   // Lines of Texture Terrain
+
+   /* terrain.texture.context.fillStyle = '#0E6BA8'
+   terrain.texture.context.fillRect(
+      0,
+      Math.round(terrain.texture.height * 0.4),
+      terrain.texture.width,
+      4
+   )
+
+   terrain.texture.context.fillStyle = '#0A2472'
+   terrain.texture.context.fillRect(
+      0,
+      Math.round(terrain.texture.height * 0.9),
+      terrain.texture.width,
+      4
+   ) */
+}
+
+terrain.texture.update()
 
 //Geometry
 terrain.geometry = new THREE.PlaneGeometry(1, 1, 1000, 1000)
