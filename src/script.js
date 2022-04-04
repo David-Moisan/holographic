@@ -2,6 +2,7 @@ import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
+import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
 import Guify from 'guify'
 import terrainVertexShader from './shaders/terrain/vertex.glsl'
@@ -29,12 +30,14 @@ const gui = new Guify({
 const sizes = {
    width: window.innerWidth,
    height: window.innerHeight,
+   pixelRatio: Math.min(window.devicePixelRatio, 2),
 }
 
 window.addEventListener('resize', () => {
    // Update sizes
    sizes.width = window.innerWidth
    sizes.height = window.innerHeight
+   sizes.pixelRatio = Math.min(window.devicePixelRatio, 2)
 
    // Update camera
    camera.aspect = sizes.width / sizes.height
@@ -42,7 +45,15 @@ window.addEventListener('resize', () => {
 
    // Update renderer
    renderer.setSize(sizes.width, sizes.height)
-   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+   renderer.setPixelRatio(sizes.pixelRatio)
+
+   // Update effect composer
+   effectComposer.setSize(sizes.width, sizes.height)
+   effectComposer.setPixelRatio(sizes.pixelRatio)
+
+   // Update passes
+   bokehPass.renderTargetDepth.width = sizes.width * sizes.pixelRatio
+   bokehPass.renderTargetDepth.height = sizes.height * sizes.pixelRatio
 })
 
 /**
@@ -159,6 +170,18 @@ terrain.material = new THREE.ShaderMaterial({
       uElevation: { value: 2 },
    },
 })
+
+//Debug
+gui.Register({
+   object: terrain.material.uniforms.uElevation,
+   property: 'value',
+   type: 'range',
+   label: 'uElevation',
+   min: 0,
+   max: 5,
+   step: 0.001,
+})
+
 //Mesh
 terrain.mesh = new THREE.Mesh(terrain.geometry, terrain.material)
 terrain.mesh.scale.set(10, 10, 10)
@@ -218,7 +241,7 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setClearColor(0x111111, 1)
 renderer.outputEncoding = THREE.sRGBEncoding
 renderer.setSize(sizes.width, sizes.height)
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+renderer.setPixelRatio(sizes.pixelRatio)
 
 //Effect Composer
 const renderTarget = new THREE.WebGLMultipleRenderTargets(800, 600, {
@@ -229,9 +252,62 @@ const renderTarget = new THREE.WebGLMultipleRenderTargets(800, 600, {
 })
 const effectComposer = new EffectComposer(renderer)
 effectComposer.setSize(sizes.width, sizes.height)
-effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+effectComposer.setPixelRatio(sizes.pixelRatio)
 
-effectComposer.addPass(new RenderPass(scene, camera))
+//Render Pass
+const renderPass = new RenderPass(scene, camera)
+effectComposer.addPass(renderPass)
+
+//Bokeh Pass
+const bokehPass = new BokehPass(scene, camera, {
+   focus: 1.0,
+   aperture: 0.025,
+   maxblur: 0.01,
+
+   width: sizes.width * sizes.pixelRatio,
+   height: sizes.height * sizes.pixelRatio,
+})
+effectComposer.addPass(bokehPass)
+
+//Debug
+gui.Register({
+   type: 'folder',
+   label: 'bokehPass',
+   open: true,
+})
+
+gui.Register({
+   folder: 'bokehPass',
+   object: bokehPass.materialBokeh.uniforms.focus,
+   property: 'value',
+   type: 'range',
+   label: 'focus',
+   min: 0,
+   max: 10,
+   step: 0.01,
+})
+
+gui.Register({
+   folder: 'bokehPass',
+   object: bokehPass.materialBokeh.uniforms.aperture,
+   property: 'value',
+   type: 'range',
+   label: 'aperture',
+   min: 0.0002,
+   max: 0.1,
+   step: 0.0001,
+})
+
+gui.Register({
+   folder: 'bokehPass',
+   object: bokehPass.materialBokeh.uniforms.maxblur,
+   property: 'value',
+   type: 'range',
+   label: 'maxblur',
+   min: 0,
+   max: 0.02,
+   step: 0.0001,
+})
 
 /**
  * Animate
