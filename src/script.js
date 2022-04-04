@@ -176,6 +176,7 @@ terrain.material = new THREE.ShaderMaterial({
       uTexture: { value: terrain.texture.instance },
       uElevation: { value: 2 },
       uTextureFrequency: { value: 10 },
+      uTime: { value: 0 },
    },
 })
 
@@ -368,6 +369,9 @@ const tick = () => {
    const elapsedTime = clock.getElapsedTime()
    const deltaTime = elapsedTime - lastElapsedTime
    lastElapsedTime = elapsedTime
+
+   //Update terrain
+   terrain.material.uniforms.uTime.value = elapsedTime
 
    // Update controls
    controls.update()
