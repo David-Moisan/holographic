@@ -69,7 +69,8 @@ const terrain = {}
 //Texture
 terrain.texture = {}
 terrain.texture.linesCount = 5
-terrain.texture.bigLineWidth = 5
+terrain.texture.bigLineWidth = 0.04
+terrain.texture.smallLineWidth = 0.01
 terrain.texture.width = 32
 terrain.texture.height = 128
 terrain.texture.canvas = document.createElement('canvas')
@@ -96,26 +97,36 @@ terrain.texture.update = () => {
    )
 
    //Big Line
+   const actualBigLineWidth = Math.round(
+      terrain.texture.height * terrain.texture.bigLineWidth
+   )
    terrain.texture.context.globalAlpha = 1
    terrain.texture.context.fillStyle = '#4ECDC4'
    terrain.texture.context.fillRect(
       0,
       0,
       terrain.texture.width,
-      Math.round(terrain.texture.height * 0.04)
+      actualBigLineWidth
    )
 
    //Small Lines
+   const actualSmallLineWidth = Math.round(
+      terrain.texture.height * terrain.texture.smallLineWidth
+   )
    const smallLinesCount = terrain.texture.linesCount - 1
 
    for (let i = 0; i < smallLinesCount; i++) {
       terrain.texture.context.globalAlpha = 0.5
       terrain.texture.context.fillRect(
          0,
-         Math.round(terrain.texture.height / terrain.texture.linesCount) *
-            (i + 1),
+         actualBigLineWidth +
+            Math.round(
+               (terrain.texture.height - actualBigLineWidth) /
+                  terrain.texture.linesCount
+            ) *
+               (i + 1),
          terrain.texture.width,
-         Math.round(terrain.texture.height * 0.01)
+         actualSmallLineWidth
       )
    }
 
