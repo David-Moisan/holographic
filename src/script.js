@@ -79,6 +79,12 @@ controls.enableDamping = true
  * Terrain
  */
 
+gui.Register({
+   type: 'folder',
+   label: 'terrain',
+   open: true,
+})
+
 const terrain = {}
 
 //Texture
@@ -158,6 +164,7 @@ terrain.texture.update()
 //Geometry
 terrain.geometry = new THREE.PlaneGeometry(1, 1, 1000, 1000)
 terrain.geometry.rotateX(-Math.PI * 0.5)
+
 //Material
 terrain.material = new THREE.ShaderMaterial({
    transparent: true,
@@ -173,6 +180,14 @@ terrain.material = new THREE.ShaderMaterial({
 
 //Debug
 gui.Register({
+   folder: 'terrain',
+   type: 'folder',
+   label: 'terrainaterial',
+   open: true,
+})
+
+gui.Register({
+   folder: 'terrainaterial',
    object: terrain.material.uniforms.uElevation,
    property: 'value',
    type: 'range',
@@ -191,6 +206,14 @@ scene.add(terrain.mesh)
  * Debug
  */
 gui.Register({
+   folder: 'terrain',
+   type: 'folder',
+   label: 'terrainTexture',
+   open: true,
+})
+
+gui.Register({
+   folder: 'terrainTexture',
    object: terrain.texture,
    property: 'linesCount',
    type: 'range',
@@ -200,7 +223,9 @@ gui.Register({
    step: 1,
    onChange: terrain.texture.update,
 })
+
 gui.Register({
+   folder: 'terrainTexture',
    object: terrain.texture,
    property: 'bigLineWidth',
    type: 'range',
@@ -210,7 +235,9 @@ gui.Register({
    step: 0.001,
    onChange: terrain.texture.update,
 })
+
 gui.Register({
+   folder: 'terrainTexture',
    object: terrain.texture,
    property: 'smallLineWidth',
    type: 'range',
@@ -220,7 +247,9 @@ gui.Register({
    step: 0.001,
    onChange: terrain.texture.update,
 })
+
 gui.Register({
+   folder: 'terrainTexture',
    object: terrain.texture,
    property: 'smallLineAlpha',
    type: 'range',
@@ -274,6 +303,14 @@ gui.Register({
    type: 'folder',
    label: 'bokehPass',
    open: true,
+})
+
+gui.Register({
+   folder: 'bokehPass',
+   object: bokehPass,
+   property: 'enabled',
+   type: 'checkbox',
+   label: 'enabled',
 })
 
 gui.Register({
