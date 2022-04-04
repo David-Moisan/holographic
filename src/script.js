@@ -1,7 +1,7 @@
 import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import * as dat from 'dat.gui'
+import Guify from 'guify'
 import terrainVertexShader from './shaders/terrain/vertex.glsl'
 import terrainFragmentShader from './shaders/terrain/fragment.glsl'
 
@@ -14,10 +14,12 @@ const canvas = document.querySelector('canvas.webgl')
 // Scene
 const scene = new THREE.Scene()
 
-/**
- * Debug
- */
-const gui = new dat.GUI()
+//GUI
+const gui = new Guify({
+   align: 'right',
+   theme: 'dark',
+   barMode: 'none',
+})
 
 /**
  * Sizes
@@ -88,6 +90,9 @@ terrain.texture.instance.wrapS = THREE.RepeatWrapping
 terrain.texture.instance.wrapT = THREE.RepeatWrapping
 terrain.texture.instance.magFilter = THREE.NearestFilter
 
+/**
+ * Update terrain texture
+ */
 terrain.texture.update = () => {
    terrain.texture.context.clearRect(
       0,
@@ -130,23 +135,8 @@ terrain.texture.update = () => {
       )
    }
 
-   // Lines of Texture Terrain
-
-   /* terrain.texture.context.fillStyle = '#0E6BA8'
-   terrain.texture.context.fillRect(
-      0,
-      Math.round(terrain.texture.height * 0.4),
-      terrain.texture.width,
-      4
-   )
-
-   terrain.texture.context.fillStyle = '#0A2472'
-   terrain.texture.context.fillRect(
-      0,
-      Math.round(terrain.texture.height * 0.9),
-      terrain.texture.width,
-      4
-   ) */
+   //Update texture instance
+   terrain.texture.instance.needsUpdate = true
 }
 
 terrain.texture.update()
@@ -170,6 +160,23 @@ terrain.material = new THREE.ShaderMaterial({
 terrain.mesh = new THREE.Mesh(terrain.geometry, terrain.material)
 terrain.mesh.scale.set(10, 10, 10)
 scene.add(terrain.mesh)
+
+/**
+ * Debug
+ */
+
+gui.Register({
+   object: terrain.texture,
+   property: 'linesCount',
+   type: 'range',
+   label: 'linesCount',
+   min: 1,
+   max: 10,
+   step: 1,
+   onChange: () => {
+      terrain.texture.update()
+   },
+})
 
 /**
  * Renderer

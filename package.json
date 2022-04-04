@@ -12,7 +12,6 @@
     "clean-webpack-plugin": "^3.0.0",
     "copy-webpack-plugin": "^9.0.1",
     "css-loader": "^5.2.6",
-    "dat.gui": "^0.7.9",
     "file-loader": "^6.2.0",
     "glslify-loader": "^2.0.0",
     "html-loader": "^2.1.2",
@@ -26,5 +25,8 @@
     "webpack-cli": "^4.7.2",
     "webpack-dev-server": "^3.11.2",
     "webpack-merge": "^5.8.0"
+  },
+  "devDependencies": {
+    "guify": "^0.12.0"
   }
 }
