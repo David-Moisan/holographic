@@ -175,6 +175,7 @@ terrain.material = new THREE.ShaderMaterial({
    uniforms: {
       uTexture: { value: terrain.texture.instance },
       uElevation: { value: 2 },
+      uTextureFrequency: { value: 10 },
    },
 })
 
@@ -195,6 +196,17 @@ gui.Register({
    min: 0,
    max: 5,
    step: 0.001,
+})
+
+gui.Register({
+   folder: 'terrainaterial',
+   object: terrain.material.uniforms.uTextureFrequency,
+   property: 'value',
+   type: 'range',
+   label: 'uTextureFrequency',
+   min: 0.01,
+   max: 50,
+   step: 0.01,
 })
 
 //Mesh
