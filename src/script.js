@@ -2,11 +2,15 @@ import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
-import { BokehPass } from 'three/examples/jsm/postprocessing/BokehPass'
+import { BokehPass } from './passes/BokehPass'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
 import Guify from 'guify'
+
+//Import shaders
 import terrainVertexShader from './shaders/terrain/vertex.glsl'
 import terrainFragmentShader from './shaders/terrain/fragment.glsl'
+import terrainDepthVertexShader from './shaders/terrainDepth/vertex.glsl'
+import terrainDepthFragmentShader from './shaders/terrainDepth/fragment.glsl'
 
 /**
  * Base
@@ -165,20 +169,13 @@ terrain.texture.update()
 terrain.geometry = new THREE.PlaneGeometry(1, 1, 1000, 1000)
 terrain.geometry.rotateX(-Math.PI * 0.5)
 
-//Material
-terrain.material = new THREE.ShaderMaterial({
-   transparent: true,
-   blending: THREE.AdditiveBlending,
-   side: THREE.DoubleSide,
-   vertexShader: terrainVertexShader,
-   fragmentShader: terrainFragmentShader,
-   uniforms: {
-      uTexture: { value: terrain.texture.instance },
-      uElevation: { value: 2 },
-      uTextureFrequency: { value: 10 },
-      uTime: { value: 0 },
-   },
-})
+//Uniforms
+terrain.uniforms = {
+   uTexture: { value: terrain.texture.instance },
+   uElevation: { value: 2 },
+   uTextureFrequency: { value: 10 },
+   uTime: { value: 0 },
+}
 
 //Debug
 gui.Register({
@@ -190,7 +187,7 @@ gui.Register({
 
 gui.Register({
    folder: 'terrainaterial',
-   object: terrain.material.uniforms.uElevation,
+   object: terrain.uniforms.uElevation,
    property: 'value',
    type: 'range',
    label: 'uElevation',
@@ -201,7 +198,7 @@ gui.Register({
 
 gui.Register({
    folder: 'terrainaterial',
-   object: terrain.material.uniforms.uTextureFrequency,
+   object: terrain.uniforms.uTextureFrequency,
    property: 'value',
    type: 'range',
    label: 'uTextureFrequency',
@@ -210,8 +207,44 @@ gui.Register({
    step: 0.01,
 })
 
+//Material
+terrain.material = new THREE.ShaderMaterial({
+   transparent: true,
+   blending: THREE.AdditiveBlending,
+   side: THREE.DoubleSide,
+   vertexShader: terrainVertexShader,
+   fragmentShader: terrainFragmentShader,
+   uniforms: terrain.uniforms,
+})
+
+// Depth material
+const uniforms = THREE.UniformsUtils.merge([
+   THREE.UniformsLib.common,
+   THREE.UniformsLib.displacementmap,
+])
+
+terrain.depthMaterial = new THREE.ShaderMaterial({
+   uniforms: uniforms,
+   vertexShader: terrainDepthVertexShader,
+   fragmentShader: terrainDepthFragmentShader,
+})
+
+// terrain.depthMaterial.depthPacking = THREE.BasicDepthPacking
+terrain.depthMaterial.morphTargets = false
+terrain.depthMaterial.map = null
+terrain.depthMaterial.alphaMap = null
+terrain.depthMaterial.displacementMap = null
+terrain.depthMaterial.displacementScale = 1
+terrain.depthMaterial.displacementBias = 0
+terrain.depthMaterial.wireframe = false
+terrain.depthMaterial.wireframeLinewidth = 1
+terrain.depthMaterial.fog = false
+
+terrain.depthMaterial.depthPacking = THREE.RGBADepthPacking
+terrain.depthMaterial.blending = THREE.NoBlending
+
 //Mesh
-terrain.mesh = new THREE.Mesh(terrain.geometry, terrain.material)
+terrain.mesh = new THREE.Mesh(terrain.geometry, terrain.depthMaterial)
 terrain.mesh.scale.set(10, 10, 10)
 scene.add(terrain.mesh)
 
@@ -309,6 +342,7 @@ const bokehPass = new BokehPass(scene, camera, {
    width: sizes.width * sizes.pixelRatio,
    height: sizes.height * sizes.pixelRatio,
 })
+bokehPass.enabled = false
 effectComposer.addPass(bokehPass)
 
 //Debug
