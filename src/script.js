@@ -28,6 +28,10 @@ const gui = new Guify({
    barMode: 'none',
 })
 
+const guiDummy = {}
+//test: #130b4a
+guiDummy.clearColor = '#080024'
+
 /**
  * Sizes
  */
@@ -394,10 +398,28 @@ const renderer = new THREE.WebGLRenderer({
    canvas: canvas,
    // antialias: true,
 })
-renderer.setClearColor(0x111111, 1)
+renderer.setClearColor(guiDummy.clearColor, 1)
 renderer.outputEncoding = THREE.sRGBEncoding
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(sizes.pixelRatio)
+
+gui.Register({
+   type: 'folder',
+   label: 'renderer',
+   open: true,
+})
+
+gui.Register({
+   folder: 'renderer',
+   object: guiDummy,
+   property: 'clearColor',
+   type: 'color',
+   label: 'clearColor',
+   format: 'hex',
+   onChange: () => {
+      renderer.setClearColor(guiDummy.clearColor, 1)
+   },
+})
 
 //Effect Composer
 const renderTarget = new THREE.WebGLMultipleRenderTargets(800, 600, {
