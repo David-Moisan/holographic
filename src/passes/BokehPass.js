@@ -7,6 +7,7 @@ import {
    ShaderMaterial,
    UniformsUtils,
    WebGLRenderTarget,
+   Mesh,
 } from 'three'
 import { Pass, FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass'
 import { BokehShader } from 'three/examples/jsm/shaders/BokehShader'
@@ -80,8 +81,14 @@ class BokehPass extends Pass {
 
    render(renderer, writeBuffer, readBuffer /*, deltaTime, maskActive*/) {
       // Render depth into texture
+      // this.scene.overrideMaterial = this.materialDepth
 
-      this.scene.overrideMaterial = this.materialDepth
+      this.scene.traverse(_child => {
+         if (_child instanceof Mesh) {
+            _child.userData.originalMaterial = _child.material
+            _child.material = this.materialDepth
+         }
+      })
 
       renderer.getClearColor(this._oldClearColor)
       const oldClearAlpha = renderer.getClearAlpha()
@@ -109,7 +116,12 @@ class BokehPass extends Pass {
          this.fsQuad.render(renderer)
       }
 
-      this.scene.overrideMaterial = null
+      // this.scene.overrideMaterial = null
+      this.scene.traverse(_child => {
+         if (_child instanceof Mesh) {
+            _child.material = _child.userData.originalMaterial
+         }
+      })
       renderer.setClearColor(this._oldClearColor)
       renderer.setClearAlpha(oldClearAlpha)
       renderer.autoClear = oldAutoClear

@@ -223,6 +223,7 @@ const uniforms = THREE.UniformsUtils.merge([
    THREE.UniformsLib.displacementmap,
 ])
 
+// For merge as a same direction of depthMat and mat
 for (const uniformKey in terrain.uniforms) {
    uniforms[uniformKey] = terrain.uniforms[uniformKey]
 }
