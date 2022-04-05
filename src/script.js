@@ -223,28 +223,21 @@ const uniforms = THREE.UniformsUtils.merge([
    THREE.UniformsLib.displacementmap,
 ])
 
+for (const uniformKey in terrain.uniforms) {
+   uniforms[uniformKey] = terrain.uniforms[uniformKey]
+}
+
 terrain.depthMaterial = new THREE.ShaderMaterial({
    uniforms: uniforms,
    vertexShader: terrainDepthVertexShader,
    fragmentShader: terrainDepthFragmentShader,
 })
 
-// terrain.depthMaterial.depthPacking = THREE.BasicDepthPacking
-terrain.depthMaterial.morphTargets = false
-terrain.depthMaterial.map = null
-terrain.depthMaterial.alphaMap = null
-terrain.depthMaterial.displacementMap = null
-terrain.depthMaterial.displacementScale = 1
-terrain.depthMaterial.displacementBias = 0
-terrain.depthMaterial.wireframe = false
-terrain.depthMaterial.wireframeLinewidth = 1
-terrain.depthMaterial.fog = false
-
 terrain.depthMaterial.depthPacking = THREE.RGBADepthPacking
 terrain.depthMaterial.blending = THREE.NoBlending
 
 //Mesh
-terrain.mesh = new THREE.Mesh(terrain.geometry, terrain.depthMaterial)
+terrain.mesh = new THREE.Mesh(terrain.geometry, terrain.material)
 terrain.mesh.scale.set(10, 10, 10)
 scene.add(terrain.mesh)
 
@@ -342,7 +335,9 @@ const bokehPass = new BokehPass(scene, camera, {
    width: sizes.width * sizes.pixelRatio,
    height: sizes.height * sizes.pixelRatio,
 })
-bokehPass.enabled = false
+
+bokehPass.materialDepth = terrain.depthMaterial
+// bokehPass.enabled = false
 effectComposer.addPass(bokehPass)
 
 //Debug
@@ -405,7 +400,7 @@ const tick = () => {
    lastElapsedTime = elapsedTime
 
    //Update terrain
-   terrain.material.uniforms.uTime.value = elapsedTime
+   terrain.uniforms.uTime.value = elapsedTime
 
    // Update controls
    controls.update()
