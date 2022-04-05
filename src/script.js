@@ -130,7 +130,8 @@ terrain.texture.update = () => {
       terrain.texture.height * terrain.texture.bigLineWidth
    )
    terrain.texture.context.globalAlpha = 1
-   terrain.texture.context.fillStyle = '#4ECDC4'
+   //Test with this color: #4ECDC4
+   terrain.texture.context.fillStyle = '#ffffff'
    terrain.texture.context.fillRect(
       0,
       0,
@@ -146,6 +147,7 @@ terrain.texture.update = () => {
 
    for (let i = 0; i < smallLinesCount; i++) {
       terrain.texture.context.globalAlpha = terrain.texture.smallLineAlpha
+      terrain.texture.context.fillStyle = '#00ffff'
       terrain.texture.context.fillRect(
          0,
          actualBigLineWidth +
@@ -306,7 +308,7 @@ gui.Register({
  */
 const renderer = new THREE.WebGLRenderer({
    canvas: canvas,
-   antialias: true,
+   // antialias: true,
 })
 renderer.setClearColor(0x111111, 1)
 renderer.outputEncoding = THREE.sRGBEncoding
