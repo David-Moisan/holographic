@@ -240,6 +240,7 @@ terrain.depthMaterial.blending = THREE.NoBlending
 //Mesh
 terrain.mesh = new THREE.Mesh(terrain.geometry, terrain.material)
 terrain.mesh.scale.set(10, 10, 10)
+terrain.mesh.userData.depthMaterial = terrain.depthMaterial
 scene.add(terrain.mesh)
 
 /**
@@ -337,7 +338,6 @@ const bokehPass = new BokehPass(scene, camera, {
    height: sizes.height * sizes.pixelRatio,
 })
 
-bokehPass.materialDepth = terrain.depthMaterial
 // bokehPass.enabled = false
 effectComposer.addPass(bokehPass)
 

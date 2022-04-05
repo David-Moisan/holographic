@@ -86,7 +86,11 @@ class BokehPass extends Pass {
       this.scene.traverse(_child => {
          if (_child instanceof Mesh) {
             _child.userData.originalMaterial = _child.material
-            _child.material = this.materialDepth
+            if (_child.userData.depthMaterial) {
+               _child.material = _child.userData.depthMaterial
+            } else {
+               _child.material = this.materialDepth
+            }
          }
       })
 
