@@ -1,5 +1,6 @@
 uniform sampler2D uTexture;
 uniform float uTextureFrequency;
+uniform float uTextureOffset;
 uniform float uTime;
 uniform float uHslHue;
 uniform float uHslHueOffset;
@@ -35,7 +36,7 @@ void main() {
 
     vec3 rainbowColor = getRainbowColor();
 
-    vec4 textureColor = texture2D(uTexture, vec2(0.0, vElevation * uTextureFrequency));
+    vec4 textureColor = texture2D(uTexture, vec2(0.0, vElevation * uTextureFrequency + uTextureOffset));
 
     vec3 color = mix(uColor, rainbowColor, textureColor.r);
 
