@@ -33,3 +33,43 @@ body {
     font-display: swap;
     text-shadow: 2px 1px 8px rgba(0, 0, 0, .89);
 }
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+}
+
+.menu .bar {
+    width: 60%;
+    height: 2px;
+    margin-bottom: 3px;
+    background: #fff;
+}
+
+.credits {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    color: #fff;
+    text-align: right;
+
+    font-family: 'Amatic SC', cursive;
+    font-weight: 200;
+}
+
+.credits a {
+    color: #fff;
+}
+
+.credits a:hover {
+    color: whitesmoke;
+    transition: color .21s;
+}
