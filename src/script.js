@@ -77,14 +77,17 @@ const camera = new THREE.PerspectiveCamera(
    0.1,
    100
 )
-camera.position.x = 1
+camera.rotation.reorder('YXZ')
 camera.position.y = 1
+camera.position.x = 1
 camera.position.z = 0
 scene.add(camera)
 
-// Controls
-const controls = new OrbitControls(camera, canvas)
-controls.enableDamping = true
+window.camera = camera
+
+// Orbit controls
+const orbitControls = new OrbitControls(camera, canvas)
+orbitControls.enableDamping = true
 
 /**
  * Terrain
@@ -93,7 +96,7 @@ controls.enableDamping = true
 gui.Register({
    type: 'folder',
    label: 'terrain',
-   open: true,
+   open: false,
 })
 
 const terrain = {}
@@ -441,8 +444,8 @@ vignette.geometry = new THREE.PlaneGeometry(2, 2)
 vignette.material = new THREE.ShaderMaterial({
    uniforms: {
       uColor: { value: vignette.color.instance },
-      uOffset: { value: 0.004 },
-      uMultiplier: { value: 0.707 },
+      uOffset: { value: 0.034 },
+      uMultiplier: { value: 0.84 },
    },
    vertexShader: vignetteVertexShader,
    fragmentShader: vignetteFragmentShader,
@@ -675,6 +678,93 @@ gui.Register({
 })
 
 /**
+ * View
+ */
+const view = {}
+view.settings = [
+   {
+      position: {
+         x: 2.525,
+         y: -Math.PI,
+         z: 0,
+      },
+      rotation: {
+         x: 1.57,
+         y: Math.PI,
+         z: 0,
+      },
+      focus: 3.52,
+   },
+   {
+      position: {
+         x: 1,
+         y: 1.1,
+         z: 0,
+      },
+      rotation: {
+         x: -0.833,
+         y: 1.596,
+         z: 1.651,
+      },
+      focus: 1.86,
+   },
+   {
+      position: {
+         x: -1.687,
+         y: 1.292,
+         z: -1.505,
+      },
+      rotation: {
+         x: -0.637,
+         y: 2.537,
+         z: 0,
+      },
+      focus: 3.07,
+   },
+   {
+      position: {
+         x: 1.65,
+         y: -0.39,
+         z: 0.155,
+      },
+      rotation: {
+         x: 0.116,
+         y: 1.58,
+         z: 0,
+      },
+      focus: 1.71,
+   },
+]
+
+view.change = _index => {
+   const viewSetting = view.settings[_index]
+
+   camera.position.copy(viewSetting.position)
+   camera.position.x = viewSetting.rotation.x
+   camera.position.y = viewSetting.rotation.y
+
+   bokehPass.materialBokeh.uniforms.focus.value = viewSetting.focus
+}
+
+view.change(0)
+
+gui.Register({
+   type: 'folder',
+   label: 'view',
+   open: true,
+})
+for (const _settingIndex in view.settings) {
+   gui.Register({
+      folder: 'view',
+      type: 'button',
+      label: `change(${_settingIndex})`,
+      action: () => {
+         view.change(_settingIndex)
+      },
+   })
+}
+
+/**
  * Animate
  */
 const clock = new THREE.Clock()
@@ -688,8 +778,8 @@ const tick = () => {
    //Update terrain
    terrain.uniforms.uTime.value = elapsedTime
 
-   // Update controls
-   controls.update()
+   // Update Orbit controls
+   orbitControls.update()
 
    // Render
    // renderer.render(scene, camera)
