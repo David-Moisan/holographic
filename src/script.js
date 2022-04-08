@@ -1,18 +1,20 @@
 import './style.css'
+import gsap from 'gsap'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
-import { BokehPass } from './passes/BokehPass'
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
 import Guify from 'guify'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
+import { BokehPass } from './passes/BokehPass'
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass'
 
 //Import shaders
 import terrainVertexShader from './shaders/terrain/vertex.glsl'
 import terrainFragmentShader from './shaders/terrain/fragment.glsl'
 import terrainDepthVertexShader from './shaders/terrainDepth/vertex.glsl'
 import terrainDepthFragmentShader from './shaders/terrainDepth/fragment.glsl'
-import vignetteVertexShader from './shaders/vignette/vertex.glsl'
-import vignetteFragmentShader from './shaders/vignette/fragment.glsl'
+import overlayVertexShader from './shaders/overlay/vertex.glsl'
+import overlayFragmentShader from './shaders/overlay/fragment.glsl'
 
 /**
  * Base
@@ -200,6 +202,79 @@ terrain.texture.update = () => {
 }
 
 terrain.texture.update()
+
+/**
+ * Debug
+ */
+gui.Register({
+   folder: 'terrain',
+   type: 'folder',
+   label: 'terrainTexture',
+   open: false,
+})
+
+gui.Register({
+   folder: 'terrainTexture',
+   object: terrain.texture,
+   property: 'visible',
+   type: 'checkbox',
+   label: 'Canvas visibility',
+   onChange: () => {
+      if (terrain.texture.visible) {
+         document.body.append(terrain.texture.canvas)
+      } else {
+         document.body.removeChild(terrain.texture.canvas)
+      }
+   },
+})
+
+gui.Register({
+   folder: 'terrainTexture',
+   object: terrain.texture,
+   property: 'linesCount',
+   type: 'range',
+   label: 'linesCount',
+   min: 1,
+   max: 10,
+   step: 1,
+   onChange: terrain.texture.update,
+})
+
+gui.Register({
+   folder: 'terrainTexture',
+   object: terrain.texture,
+   property: 'bigLineWidth',
+   type: 'range',
+   label: 'bigLineWidth',
+   min: 0,
+   max: 0.5,
+   step: 0.001,
+   onChange: terrain.texture.update,
+})
+
+gui.Register({
+   folder: 'terrainTexture',
+   object: terrain.texture,
+   property: 'smallLineWidth',
+   type: 'range',
+   label: 'smallLineWidth',
+   min: 0,
+   max: 0.1,
+   step: 0.001,
+   onChange: terrain.texture.update,
+})
+
+gui.Register({
+   folder: 'terrainTexture',
+   object: terrain.texture,
+   property: 'smallLineAlpha',
+   type: 'range',
+   label: 'smallLineAlpha',
+   min: 0,
+   max: 1,
+   step: 0.01,
+   onChange: terrain.texture.update,
+})
 
 //Geometry
 terrain.geometry = new THREE.PlaneGeometry(1, 1, 1000, 1000)
@@ -448,144 +523,115 @@ terrain.mesh.userData.depthMaterial = terrain.depthMaterial
 scene.add(terrain.mesh)
 
 /**
- * Vignette
+ * Overlay
  */
-const vignette = {}
+const overlay = {}
 
-vignette.color = {}
-vignette.color.value = '#280b8a'
-vignette.color.instance = new THREE.Color(vignette.color.value)
+overlay.vignetteColor = {}
+overlay.vignetteColor.value = '#280b8a'
+overlay.vignetteColor.instance = new THREE.Color(overlay.vignetteColor.value)
 
-vignette.geometry = new THREE.PlaneGeometry(2, 2)
+overlay.overlayColor = {}
+overlay.overlayColor.value = '#130621'
+overlay.overlayColor.instance = new THREE.Color(overlay.overlayColor.value)
 
-vignette.material = new THREE.ShaderMaterial({
+overlay.geometry = new THREE.PlaneGeometry(2, 2)
+
+overlay.material = new THREE.ShaderMaterial({
    uniforms: {
-      uColor: { value: vignette.color.instance },
-      uOffset: { value: 0.034 },
-      uMultiplier: { value: 0.84 },
+      uVignetteColor: { value: overlay.vignetteColor.instance },
+      uVignetteMultiplier: { value: 1.16 },
+      uVignetteOffset: { value: -1 },
+      uOverlayColor: { value: overlay.overlayColor.instance },
+      uOverlayAlpha: { value: 1 },
    },
-   vertexShader: vignetteVertexShader,
-   fragmentShader: vignetteFragmentShader,
+   vertexShader: overlayVertexShader,
+   fragmentShader: overlayFragmentShader,
    transparent: true,
    depthTest: false,
 })
 
-vignette.mesh = new THREE.Mesh(vignette.geometry, vignette.material)
-vignette.mesh.userData.noBokeh = true
-vignette.mesh.userData.frustumCulled = false
-scene.add(vignette.mesh)
+overlay.mesh = new THREE.Mesh(overlay.geometry, overlay.material)
+overlay.mesh.userData.noBokeh = true
+overlay.mesh.userData.frustumCulled = false
+scene.add(overlay.mesh)
+
+window.requestAnimationFrame(() => {
+   gsap.to(overlay.material.uniforms.uOverlayAlpha, {
+      delay: 0.4,
+      duration: 3,
+      value: 0,
+      ease: 'power2.out',
+   })
+   gsap.to(overlay.material.uniforms.uVignetteOffset, {
+      delay: 0.4,
+      duration: 3,
+      value: -0.165,
+      ease: 'power2.out',
+   })
+})
 
 gui.Register({
    type: 'folder',
-   label: 'vignette',
+   label: 'overlay',
    open: false,
 })
 
 gui.Register({
-   folder: 'vignette',
-   object: vignette.color,
+   folder: 'overlay',
+   object: overlay.vignetteColor,
    property: 'value',
    type: 'color',
    label: 'vignetteColor',
    format: 'hex',
    onChange: () => {
-      vignette.color.instance.set(vignette.color.value)
+      overlay.vignetteColor.instance.set(overlay.vignetteColor.value)
    },
 })
 
 gui.Register({
-   folder: 'vignette',
-   object: vignette.material.uniforms.uMultiplier,
+   folder: 'overlay',
+   object: overlay.material.uniforms.uVignetteMultiplier,
    property: 'value',
    type: 'range',
-   label: 'uMultiplier',
+   label: 'uVignetteMultiplier',
    min: 0,
    max: 5,
    step: 0.001,
 })
 
 gui.Register({
-   folder: 'vignette',
-   object: vignette.material.uniforms.uOffset,
+   folder: 'overlay',
+   object: overlay.material.uniforms.uVignetteOffset,
    property: 'value',
    type: 'range',
-   label: 'uOffset',
-   min: -1,
-   max: 1,
+   label: 'uVignetteOffset',
+   min: -2,
+   max: 2,
    step: 0.001,
 })
 
-/**
- * Debug
- */
 gui.Register({
-   folder: 'terrain',
-   type: 'folder',
-   label: 'terrainTexture',
-   open: false,
-})
-
-gui.Register({
-   folder: 'terrainTexture',
-   object: terrain.texture,
-   property: 'visible',
-   type: 'checkbox',
-   label: 'Canvas visibility',
+   folder: 'overlay',
+   object: overlay.overlayColor,
+   property: 'value',
+   type: 'color',
+   label: 'overlayColor',
+   format: 'hex',
    onChange: () => {
-      if (terrain.texture.visible) {
-         document.body.append(terrain.texture.canvas)
-      } else {
-         document.body.removeChild(terrain.texture.canvas)
-      }
+      overlay.overlayColor.instance.set(overlay.overlayColor.value)
    },
 })
 
 gui.Register({
-   folder: 'terrainTexture',
-   object: terrain.texture,
-   property: 'linesCount',
+   folder: 'overlay',
+   object: overlay.material.uniforms.uOverlayAlpha,
+   property: 'value',
    type: 'range',
-   label: 'linesCount',
-   min: 1,
-   max: 10,
-   step: 1,
-   onChange: terrain.texture.update,
-})
-
-gui.Register({
-   folder: 'terrainTexture',
-   object: terrain.texture,
-   property: 'bigLineWidth',
-   type: 'range',
-   label: 'bigLineWidth',
-   min: 0,
-   max: 0.5,
-   step: 0.001,
-   onChange: terrain.texture.update,
-})
-
-gui.Register({
-   folder: 'terrainTexture',
-   object: terrain.texture,
-   property: 'smallLineWidth',
-   type: 'range',
-   label: 'smallLineWidth',
-   min: 0,
-   max: 0.1,
-   step: 0.001,
-   onChange: terrain.texture.update,
-})
-
-gui.Register({
-   folder: 'terrainTexture',
-   object: terrain.texture,
-   property: 'smallLineAlpha',
-   type: 'range',
-   label: 'smallLineAlpha',
+   label: 'uOverlayAlpha',
    min: 0,
    max: 1,
-   step: 0.01,
-   onChange: terrain.texture.update,
+   step: 0.001,
 })
 
 /**
@@ -694,6 +740,63 @@ gui.Register({
    step: 0.0001,
 })
 
+//Unreal bloom pass
+const unrealBloomPass = new UnrealBloomPass(
+   new THREE.Vector2(sizes.width, sizes.height),
+   1.5,
+   0.4,
+   0.85
+)
+unrealBloomPass.enabled = false
+effectComposer.addPass(unrealBloomPass)
+
+gui.Register({
+   type: 'folder',
+   label: 'unrealBloomPass',
+   open: false,
+})
+
+gui.Register({
+   folder: 'unrealBloomPass',
+   object: unrealBloomPass,
+   property: 'enabled',
+   type: 'checkbox',
+   label: 'unrealBloomPass',
+})
+
+gui.Register({
+   folder: 'unrealBloomPass',
+   object: unrealBloomPass,
+   property: 'threshold',
+   type: 'range',
+   label: 'threshold',
+   min: 0,
+   max: 1,
+   step: 0.0001,
+})
+
+gui.Register({
+   folder: 'unrealBloomPass',
+   object: unrealBloomPass,
+   property: 'strength',
+   type: 'range',
+   label: 'strength',
+   min: 0,
+   max: 3,
+   step: 0.0001,
+})
+
+gui.Register({
+   folder: 'unrealBloomPass',
+   object: unrealBloomPass,
+   property: 'radius',
+   type: 'range',
+   label: 'radius',
+   min: 0,
+   max: 1,
+   step: 0.0001,
+})
+
 /**
  * View
  */
@@ -791,28 +894,41 @@ view.apply = () => {
    view.parallax.multiplier = view.current.parallaxMultiplier
 }
 
-view.apply()
-
 //Change
 view.change = _index => {
-   const viewSetting = view.settings[_index]
+   view.index = _index
+   view.current = view.settings[_index]
 
-   camera.instance.position.copy(viewSetting.position)
-   camera.instance.rotation.x = viewSetting.rotation.x
-   camera.instance.rotation.y = viewSetting.rotation.y
+   // Show overlay
+   gsap.to(overlay.material.uniforms.uOverlayAlpha, {
+      duration: 1.25,
+      value: 1,
+      ease: 'power2.inOut',
+      onComplete: () => {
+         view.apply()
 
-   bokehPass.materialBokeh.uniforms.focus.value = viewSetting.focus
-
-   view.parallax.multiplier = viewSetting.parallaxMultiplier
+         //Hide overlay
+         gsap.to(overlay.material.uniforms.uOverlayAlpha, {
+            duration: 1,
+            value: 0,
+            ease: 'power2.inOut',
+         })
+      },
+   })
 }
 
-view.change(0)
+view.apply()
+
+window.setInterval(() => {
+   view.change((view.index + 1) % view.settings.length)
+}, 7500)
 
 gui.Register({
    type: 'folder',
    label: 'view',
    open: false,
 })
+
 for (const _settingIndex in view.settings) {
    gui.Register({
       folder: 'view',
@@ -820,6 +936,86 @@ for (const _settingIndex in view.settings) {
       label: `change(${_settingIndex})`,
       action: () => {
          view.change(_settingIndex)
+      },
+   })
+}
+
+// Focus animation
+const changeFocus = () => {
+   {
+      gsap.to(bokehPass.materialBokeh.uniforms.focus, {
+         duration: 0.5 + Math.random() * 3,
+         delay: 0.5 + Math.random() * 1,
+         ease: 'power2.inOut',
+         onComplete: changeFocus,
+         value: view.current.focus + Math.random() - 0.2,
+      })
+   }
+}
+
+changeFocus()
+
+/**
+ * Presets
+ */
+const presets = {}
+presets.settings = [
+   {
+      vignetteColor: '#4f1f96',
+      overlayColor: '#130621',
+      clearColor: '#080024',
+      terrainHue: 1,
+      terrainHueOffset: 0,
+   },
+   {
+      vignetteColor: '#590826',
+      overlayColor: '#21060b',
+      clearColor: '#240004',
+      terrainHue: 0.145,
+      terrainHueOffset: 0.86,
+   },
+   {
+      vignetteColor: '#1f6a96',
+      overlayColor: '#050e1c',
+      clearColor: '#000324',
+      terrainHue: 0.12,
+      terrainHueOffset: 0.5,
+   },
+   {
+      vignetteColor: '#1f9682',
+      overlayColor: '#02100c',
+      clearColor: '#00240c',
+      terrainHue: 0.12,
+      terrainHueOffset: 0.2,
+   },
+]
+
+presets.apply = _index => {
+   const presetsSettings = presets.settings[_index]
+
+   overlay.vignetteColor.instance.set(presetsSettings.vignetteColor)
+
+   overlay.overlayColor.instance.set(presetsSettings.overlayColor)
+
+   terrain.uniforms.uHslHue.value = presetsSettings.terrainHue
+   terrain.uniforms.uHslHueOffset.value = presets.terrainHueOffset
+
+   renderer.setClearColor(presetsSettings.clearColor, 1)
+}
+
+gui.Register({
+   type: 'folder',
+   label: 'presets',
+   open: true,
+})
+
+for (const _presetsIndex in presets.settings) {
+   gui.Register({
+      folder: 'presets',
+      type: 'button',
+      label: `apply(${_presetsIndex})`,
+      action: () => {
+         presets.apply(_presetsIndex)
       },
    })
 }
@@ -854,6 +1050,7 @@ const tick = () => {
       (view.parallax.target.y - view.parallax.eased.y) *
       deltaTime *
       view.parallax.eased.multiplier
+
    camera.instance.translateX(view.parallax.eased.x)
    camera.instance.translateY(view.parallax.eased.y)
 
