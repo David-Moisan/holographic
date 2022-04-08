@@ -51,8 +51,8 @@ window.addEventListener('resize', () => {
    sizes.pixelRatio = Math.min(window.devicePixelRatio, 2)
 
    // Update camera
-   camera.aspect = sizes.width / sizes.height
-   camera.updateProjectionMatrix()
+   camera.instance.aspect = sizes.width / sizes.height
+   camera.instance.updateProjectionMatrix()
 
    // Update renderer
    renderer.setSize(sizes.width, sizes.height)
@@ -70,24 +70,41 @@ window.addEventListener('resize', () => {
 /**
  * Camera
  */
+const camera = {}
+camera.position = new THREE.Vector3()
+camera.rotation = new THREE.Euler()
+camera.rotation.reorder('YXZ')
+
 // Base camera
-const camera = new THREE.PerspectiveCamera(
+camera.instance = new THREE.PerspectiveCamera(
    75,
    sizes.width / sizes.height,
    0.1,
    100
 )
-camera.rotation.reorder('YXZ')
-camera.position.y = 1
-camera.position.x = 1
-camera.position.z = 0
-scene.add(camera)
+camera.instance.rotation.reorder('YXZ')
+scene.add(camera.instance)
 
-window.camera = camera
+window.camera = camera.instance
 
 // Orbit controls
-// const orbitControls = new OrbitControls(camera, canvas)
-// orbitControls.enableDamping = true
+const orbitControls = new OrbitControls(camera.instance, canvas)
+orbitControls.enabled = false
+orbitControls.enableDamping = true
+
+gui.Register({
+   type: 'folder',
+   label: 'camera',
+   open: false,
+})
+
+gui.Register({
+   folder: 'camera',
+   object: orbitControls,
+   property: 'enabled',
+   type: 'checkbox',
+   label: 'orbitControls',
+})
 
 /**
  * Terrain
@@ -215,7 +232,7 @@ gui.Register({
    folder: 'terrain',
    type: 'folder',
    label: 'terrainaterial',
-   open: true,
+   open: false,
 })
 
 gui.Register({
@@ -461,7 +478,7 @@ scene.add(vignette.mesh)
 gui.Register({
    type: 'folder',
    label: 'vignette',
-   open: true,
+   open: false,
 })
 
 gui.Register({
@@ -505,7 +522,7 @@ gui.Register({
    folder: 'terrain',
    type: 'folder',
    label: 'terrainTexture',
-   open: true,
+   open: false,
 })
 
 gui.Register({
@@ -586,7 +603,7 @@ renderer.setPixelRatio(sizes.pixelRatio)
 gui.Register({
    type: 'folder',
    label: 'renderer',
-   open: true,
+   open: false,
 })
 
 gui.Register({
@@ -613,11 +630,11 @@ effectComposer.setSize(sizes.width, sizes.height)
 effectComposer.setPixelRatio(sizes.pixelRatio)
 
 //Render Pass
-const renderPass = new RenderPass(scene, camera)
+const renderPass = new RenderPass(scene, camera.instance)
 effectComposer.addPass(renderPass)
 
 //Bokeh Pass
-const bokehPass = new BokehPass(scene, camera, {
+const bokehPass = new BokehPass(scene, camera.instance, {
    focus: 1.0,
    aperture: 0.01,
    maxblur: 0.01,
@@ -633,7 +650,7 @@ effectComposer.addPass(bokehPass)
 gui.Register({
    type: 'folder',
    label: 'bokehPass',
-   open: true,
+   open: false,
 })
 
 gui.Register({
@@ -681,6 +698,7 @@ gui.Register({
  * View
  */
 const view = {}
+view.index = 0
 view.settings = [
    {
       position: {
@@ -694,6 +712,7 @@ view.settings = [
          z: 0,
       },
       focus: 2.14,
+      parallaxMultiplier: 0.25,
    },
    {
       position: {
@@ -707,6 +726,7 @@ view.settings = [
          z: 1.651,
       },
       focus: 1.1,
+      parallaxMultiplier: 0.12,
    },
    {
       position: {
@@ -720,6 +740,7 @@ view.settings = [
          z: 0,
       },
       focus: 1.36,
+      parallaxMultiplier: 0.12,
    },
    {
       position: {
@@ -733,17 +754,56 @@ view.settings = [
          z: 0,
       },
       focus: 1.25,
+      parallaxMultiplier: 0.12,
    },
 ]
 
+view.current = view.settings[view.index]
+
+//Parallax
+view.parallax = {}
+view.parallax.target = {}
+view.parallax.target.x = 0
+view.parallax.target.y = 0
+view.parallax.eased = {}
+view.parallax.eased.x = 0
+view.parallax.eased.y = 0
+view.parallax.eased.multiplier = 4
+
+window.addEventListener('mousemove', _event => {
+   view.parallax.target.x =
+      (_event.clientX / sizes.width - 0.5) * view.parallax.multiplier
+   view.parallax.target.y =
+      -(_event.clientY / sizes.height - 0.5) * view.parallax.multiplier
+})
+
+//Apply
+view.apply = () => {
+   //Camera
+   camera.position.copy(view.current.position)
+   camera.rotation.x = view.current.rotation.x
+   camera.rotation.y = view.current.rotation.y
+
+   //Bokeh
+   bokehPass.materialBokeh.uniforms.focus.value = view.current.focus
+
+   //Parallax
+   view.parallax.multiplier = view.current.parallaxMultiplier
+}
+
+view.apply()
+
+//Change
 view.change = _index => {
    const viewSetting = view.settings[_index]
 
-   camera.position.copy(viewSetting.position)
-   camera.rotation.x = viewSetting.rotation.x
-   camera.rotation.y = viewSetting.rotation.y
+   camera.instance.position.copy(viewSetting.position)
+   camera.instance.rotation.x = viewSetting.rotation.x
+   camera.instance.rotation.y = viewSetting.rotation.y
 
    bokehPass.materialBokeh.uniforms.focus.value = viewSetting.focus
+
+   view.parallax.multiplier = viewSetting.parallaxMultiplier
 }
 
 view.change(0)
@@ -751,7 +811,7 @@ view.change(0)
 gui.Register({
    type: 'folder',
    label: 'view',
-   open: true,
+   open: false,
 })
 for (const _settingIndex in view.settings) {
    gui.Register({
@@ -779,10 +839,29 @@ const tick = () => {
    terrain.uniforms.uTime.value = elapsedTime
 
    // Update Orbit controls
-   // orbitControls.update()
+   if (orbitControls.enabled) {
+      orbitControls.update()
+   }
+
+   // Camera
+   camera.instance.position.copy(camera.position)
+
+   view.parallax.eased.x +=
+      (view.parallax.target.x - view.parallax.eased.x) *
+      deltaTime *
+      view.parallax.eased.multiplier
+   view.parallax.eased.y +=
+      (view.parallax.target.y - view.parallax.eased.y) *
+      deltaTime *
+      view.parallax.eased.multiplier
+   camera.instance.translateX(view.parallax.eased.x)
+   camera.instance.translateY(view.parallax.eased.y)
+
+   camera.instance.rotation.x = camera.rotation.x
+   camera.instance.rotation.y = camera.rotation.y
 
    // Render
-   // renderer.render(scene, camera)
+   // renderer.render(scene, camera.instance)
    effectComposer.render()
 
    // Call tick again on the next frame
