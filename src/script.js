@@ -86,8 +86,8 @@ scene.add(camera)
 window.camera = camera
 
 // Orbit controls
-const orbitControls = new OrbitControls(camera, canvas)
-orbitControls.enableDamping = true
+// const orbitControls = new OrbitControls(camera, canvas)
+// orbitControls.enableDamping = true
 
 /**
  * Terrain
@@ -684,16 +684,16 @@ const view = {}
 view.settings = [
    {
       position: {
-         x: 2.525,
+         x: 0,
+         y: 2.124,
+         z: -0.172,
+      },
+      rotation: {
+         x: -1.489,
          y: -Math.PI,
          z: 0,
       },
-      rotation: {
-         x: 1.57,
-         y: Math.PI,
-         z: 0,
-      },
-      focus: 3.52,
+      focus: 2.14,
    },
    {
       position: {
@@ -706,33 +706,33 @@ view.settings = [
          y: 1.596,
          z: 1.651,
       },
-      focus: 1.86,
+      focus: 1.1,
    },
    {
       position: {
-         x: -1.687,
-         y: 1.292,
-         z: -1.505,
+         x: 1,
+         y: 0.87,
+         z: -0.97,
       },
       rotation: {
-         x: -0.637,
-         y: 2.537,
+         x: -0.638,
+         y: 2.33,
          z: 0,
       },
-      focus: 3.07,
+      focus: 1.36,
    },
    {
       position: {
-         x: 1.65,
-         y: -0.39,
-         z: 0.155,
+         x: -1.43,
+         y: 0.33,
+         z: -0.144,
       },
       rotation: {
-         x: 0.116,
-         y: 1.58,
+         x: -0.312,
+         y: -1.67,
          z: 0,
       },
-      focus: 1.71,
+      focus: 1.25,
    },
 ]
 
@@ -740,8 +740,8 @@ view.change = _index => {
    const viewSetting = view.settings[_index]
 
    camera.position.copy(viewSetting.position)
-   camera.position.x = viewSetting.rotation.x
-   camera.position.y = viewSetting.rotation.y
+   camera.rotation.x = viewSetting.rotation.x
+   camera.rotation.y = viewSetting.rotation.y
 
    bokehPass.materialBokeh.uniforms.focus.value = viewSetting.focus
 }
@@ -779,7 +779,7 @@ const tick = () => {
    terrain.uniforms.uTime.value = elapsedTime
 
    // Update Orbit controls
-   orbitControls.update()
+   // orbitControls.update()
 
    // Render
    // renderer.render(scene, camera)
